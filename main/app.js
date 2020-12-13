@@ -47,6 +47,9 @@ let FoodItem = sequelize.define('foodItem', {
 
 
 const app = express()
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // TODO
 
 app.get('/create', async (req, res) => {
@@ -80,11 +83,34 @@ app.get('/food-items', async (req, res) => {
 })
 
 app.post('/food-items', async (req, res) => {
-    try{
-        // TODO
+    try {
+        if (Object.keys(req.body).length === 0) {
+            throw 'body is missing';
+        }
+        if (!req.body.hasOwnProperty('name') || !req.body.hasOwnProperty('category') || !req.body.hasOwnProperty('calories')) {
+            throw 'malformed request';
+        }
+        if (req.body.calories < 0) {
+            throw 'calories should be a positive number';
+        }
+        await FoodItem.create({
+            name: req.body.name,
+            category: req.body.category,
+            calories: req.body.calories
+        });
+        res.status(201).json({ message: 'created' })
     }
-    catch(err){
-        // TODO
+    catch (err) {
+        switch (err) {
+            case 'body is missing':
+            case 'malformed request':
+            case 'calories should be a positive number':    
+                res.status(400).json({ message: err });
+                break;
+            default:
+                res.status(400).json({ message: 'not a valid category' });
+                break;
+        }
     }
 })
 
